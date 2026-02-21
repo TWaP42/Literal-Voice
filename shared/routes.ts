@@ -26,7 +26,10 @@ export const api = {
     create: {
       method: 'POST' as const,
       path: '/api/translations' as const,
-      input: z.object({ text: z.string().min(1, "Please enter a phrase to translate") }),
+      input: z.object({ 
+        text: z.string().min(1, "Please enter a phrase to translate"),
+        targetLanguage: z.string().optional()
+      }),
       responses: {
         201: z.custom<typeof translations.$inferSelect>(),
         400: errorSchemas.validation,

@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const [text, setText] = useState("");
+  const [targetLanguage, setTargetLanguage] = useState("");
   const { toast } = useToast();
   const createMutation = useCreateTranslation();
   const { data: recentTranslations, isLoading: isLoadingHistory } = useTranslations();
@@ -19,7 +20,10 @@ export default function Home() {
     if (!text.trim()) return;
 
     try {
-      await createMutation.mutateAsync({ text });
+      await createMutation.mutateAsync({ 
+        text, 
+        ...(targetLanguage.trim() ? { targetLanguage: targetLanguage.trim() } : {})
+      });
       setText("");
       toast({
         title: "Translation Complete",
@@ -66,7 +70,7 @@ export default function Home() {
           >
             <form onSubmit={handleTranslate} className="relative group">
               <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-accent/20 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-              <div className="relative flex gap-2 p-2 bg-white rounded-2xl shadow-xl border border-white/50">
+              <div className="relative flex flex-col gap-2 p-2 bg-white rounded-2xl shadow-xl border border-white/50">
                 <div className="relative flex-grow">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
                     <Search className="w-5 h-5" />
@@ -79,24 +83,33 @@ export default function Home() {
                     disabled={createMutation.isPending}
                   />
                 </div>
-                <Button 
-                  size="lg" 
-                  type="submit" 
-                  disabled={createMutation.isPending || !text.trim()}
-                  className="rounded-xl px-8"
-                >
-                  {createMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Translating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      Translate Phrase
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Input
+                    value={targetLanguage}
+                    onChange={(e) => setTargetLanguage(e.target.value)}
+                    placeholder='Target Language (optional, e.g., Spanish)'
+                    className="flex-grow border-0 bg-slate-50 focus-visible:ring-0 text-md h-12 rounded-xl px-4"
+                    disabled={createMutation.isPending}
+                  />
+                  <Button 
+                    size="lg" 
+                    type="submit" 
+                    disabled={createMutation.isPending || !text.trim()}
+                    className="rounded-xl px-8 h-12"
+                  >
+                    {createMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Translating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Translate Phrase
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </form>
           </motion.div>

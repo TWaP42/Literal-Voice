@@ -8,6 +8,7 @@ export const translations = pgTable("translations", {
   originalText: text("original_text").notNull(),
   literalTranslation: text("literal_translation").notNull(),
   explanation: text("explanation"),
+  targetLanguage: text("target_language"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -21,9 +22,10 @@ export type Translation = typeof translations.$inferSelect;
 export type InsertTranslation = z.infer<typeof insertTranslationSchema>;
 
 // Request types
-export type CreateTranslationRequest = { text: string }; // User just sends the confusing text
+export type CreateTranslationRequest = { text: string; targetLanguage?: string }; // User just sends the confusing text
 
 // Response types
 export type TranslationResponse = Translation;
 export type TranslationsListResponse = Translation[];
+
 

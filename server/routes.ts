@@ -30,6 +30,10 @@ export async function registerRoutes(
       // Validate the user's input phrase
       const input = api.translations.create.input.parse(req.body);
       
+      const targetLanguageInstruction = input.targetLanguage 
+        ? ` Translate the literal rephrasing and explanation into ${input.targetLanguage}.`
+        : ` Use the same language as the input phrase.`;
+
       const response = await openai.chat.completions.create({
         model: "gpt-5.1",
         messages: [
@@ -41,6 +45,7 @@ Your tone should be neutral, direct, clear, and reassuring.
 Given a phrase, you must output a JSON object with two fields:
 - "literalTranslation": A very brief, literal rephrasing of the text without any metaphors.
 - "explanation": A slightly longer context of why people say that and what the origin or meaning is, keeping it factual and avoiding complex abstractions.
+${targetLanguageInstruction}
 
 Return ONLY the JSON. Do not wrap in markdown code blocks.`
           },
@@ -63,7 +68,8 @@ Return ONLY the JSON. Do not wrap in markdown code blocks.`
       const translation = await storage.createTranslation({
         originalText: input.text,
         literalTranslation: parsedAIResponse.literalTranslation,
-        explanation: parsedAIResponse.explanation
+        explanation: parsedAIResponse.explanation,
+        targetLanguage: input.targetLanguage
       });
 
       res.status(201).json(translation);
