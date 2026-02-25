@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Lightbulb, Globe, MessageCircle, Flame, BookOpen, Hash, Quote } from "lucide-react";
-import type { Translation } from "@shared/routes";
+import type { Translation } from "@shared/schema";
 
 interface TranslationCardProps {
   translation: Translation;

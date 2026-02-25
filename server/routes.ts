@@ -64,8 +64,8 @@ function rateLimit(req: Request, res: Response, next: NextFunction) {
 
 setInterval(() => {
   const now = Date.now();
-  for (const [ip, timestamps] of rateLimitMap.entries()) {
-    const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+  for (const [ip, timestamps] of Array.from(rateLimitMap.entries())) {
+    const recent = timestamps.filter((t: number) => now - t < RATE_LIMIT_WINDOW_MS);
     if (recent.length === 0) {
       rateLimitMap.delete(ip);
     } else {
