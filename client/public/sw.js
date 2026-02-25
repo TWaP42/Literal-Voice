@@ -1,4 +1,4 @@
-const CACHE_NAME = 'literalvoice-v1';
+const CACHE_NAME = 'literalvoice-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -29,8 +29,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
           return response;
         })
         .catch(() => caches.match(request))
@@ -39,13 +41,14 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => {
-      const fetched = fetch(request).then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+    fetch(request)
+      .then((response) => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
         return response;
-      });
-      return cached || fetched;
-    })
+      })
+      .catch(() => caches.match(request).then((cached) => cached || new Response('Offline', { status: 503 })))
   );
 });

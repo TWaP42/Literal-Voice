@@ -107,21 +107,34 @@ Given a sarcastic or potentially sarcastic phrase, output a JSON object with thr
 
 Return ONLY the JSON. Do not wrap in markdown code blocks.`;
 
-async function translateWithOpenAI(sanitizedText: string, targetLang: string) {
-  const response = await openai.chat.completions.create({
-    model: "gpt-5.1",
-    messages: [
-      {
-        role: "system",
-        content: `${BASE_SYSTEM_PROMPT}\n\nTranslate the literal rephrasing and explanation into ${targetLang}.\n\nReturn ONLY the JSON. Do not wrap in markdown code blocks.`
-      },
-      {
-        role: "user",
-        content: `Analyze the following phrase for figurative or sarcastic meaning:\n\n${sanitizedText}`
-      }
-    ],
-    response_format: { type: "json_object" }
+const AI_TIMEOUT_MS = 30_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    promise.then(resolve, reject).finally(() => clearTimeout(timer));
   });
+}
+
+async function translateWithOpenAI(sanitizedText: string, targetLang: string) {
+  const response = await withTimeout(
+    openai.chat.completions.create({
+      model: "gpt-5.1",
+      messages: [
+        {
+          role: "system",
+          content: `${BASE_SYSTEM_PROMPT}\n\nTranslate the literal rephrasing and explanation into ${targetLang}.\n\nReturn ONLY the JSON. Do not wrap in markdown code blocks.`
+        },
+        {
+          role: "user",
+          content: `Analyze the following phrase for figurative or sarcastic meaning:\n\n${sanitizedText}`
+        }
+      ],
+      response_format: { type: "json_object" }
+    }),
+    AI_TIMEOUT_MS,
+    "OpenAI"
+  );
 
   const responseText = response.choices[0]?.message?.content;
   if (!responseText) {
@@ -139,20 +152,24 @@ async function translateWithOpenAI(sanitizedText: string, targetLang: string) {
 }
 
 async function translateSarcasmWithClaude(sanitizedText: string, targetLang: string) {
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1024,
-    messages: [
-      {
-        role: "user",
-        content: `Analyze the following phrase for its sarcastic meaning:\n\n${sanitizedText}`
-      }
-    ],
-    system: `${SARCASM_SYSTEM_PROMPT}\n\nTranslate the literal rephrasing and explanation into ${targetLang}.`,
-  });
+  const message = await withTimeout(
+    anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: `Analyze the following phrase for its sarcastic meaning:\n\n${sanitizedText}`
+        }
+      ],
+      system: `${SARCASM_SYSTEM_PROMPT}\n\nTranslate the literal rephrasing and explanation into ${targetLang}.`,
+    }),
+    AI_TIMEOUT_MS,
+    "Claude"
+  );
 
   const content = message.content[0];
-  if (content.type !== "text") {
+  if (!content || content.type !== "text") {
     throw new Error("Failed to generate sarcasm translation from Claude");
   }
 
