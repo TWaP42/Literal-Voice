@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Lightbulb, Globe } from "lucide-react";
+import { ArrowRight, Lightbulb, Globe, MessageCircle, Flame, BookOpen, Hash, Quote } from "lucide-react";
 import type { Translation } from "@shared/routes";
 
 interface TranslationCardProps {
@@ -8,7 +8,18 @@ interface TranslationCardProps {
   index: number;
 }
 
+const typeConfig: Record<string, { label: string; color: string; icon: typeof MessageCircle }> = {
+  sarcasm: { label: "Sarcasm", color: "bg-orange-100 text-orange-700 border-orange-200", icon: Flame },
+  idiom: { label: "Idiom", color: "bg-blue-100 text-blue-700 border-blue-200", icon: BookOpen },
+  metaphor: { label: "Metaphor", color: "bg-purple-100 text-purple-700 border-purple-200", icon: Quote },
+  slang: { label: "Slang", color: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: Hash },
+  figure_of_speech: { label: "Figure of Speech", color: "bg-pink-100 text-pink-700 border-pink-200", icon: MessageCircle },
+};
+
 export function TranslationCard({ translation, index }: TranslationCardProps) {
+  const phraseType = translation.phraseType ? typeConfig[translation.phraseType] : null;
+  const TypeIcon = phraseType?.icon;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -18,8 +29,16 @@ export function TranslationCard({ translation, index }: TranslationCardProps) {
     >
       <Card className="h-full hover:border-primary/30 group bg-white/50 backdrop-blur-sm touch-manipulation">
         <CardHeader className="p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs sm:text-sm font-medium px-2 py-1 bg-muted rounded-md text-muted-foreground">Original Phrase</span>
+          <div className="flex items-center justify-between mb-2 flex-wrap gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs sm:text-sm font-medium px-2 py-1 bg-muted rounded-md text-muted-foreground">Original Phrase</span>
+              {phraseType && TypeIcon && (
+                <span className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border ${phraseType.color}`} data-testid={`badge-type-${translation.id}`}>
+                  <TypeIcon className="w-3 h-3" />
+                  {phraseType.label}
+                </span>
+              )}
+            </div>
             {translation.targetLanguage && (
               <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-accent/10 text-accent rounded-md" data-testid={`text-language-${translation.id}`}>
                 <Globe className="w-3 h-3" />

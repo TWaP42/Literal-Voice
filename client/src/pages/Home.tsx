@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const [text, setText] = useState("");
-  const [targetLanguage, setTargetLanguage] = useState("");
+  const [targetLanguage, setTargetLanguage] = useState("English");
   const { toast } = useToast();
   const createMutation = useCreateTranslation();
   const { data: recentTranslations, isLoading: isLoadingHistory } = useTranslations();
@@ -56,7 +56,7 @@ export default function Home() {
               </span>
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-balance px-2">
-              Confused by metaphors or figures of speech? Enter a phrase below to get a direct, literal explanation instantly.
+              Confused by metaphors, sarcasm, or figures of speech? Enter a phrase below to get a direct, literal explanation instantly.
             </p>
           </motion.div>
 

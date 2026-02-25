@@ -9,6 +9,7 @@ export const translations = pgTable("translations", {
   literalTranslation: text("literal_translation").notNull(),
   explanation: text("explanation"),
   targetLanguage: text("target_language"),
+  phraseType: text("phrase_type"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

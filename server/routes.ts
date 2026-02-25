@@ -30,21 +30,26 @@ export async function registerRoutes(
       // Validate the user's input phrase
       const input = api.translations.create.input.parse(req.body);
       
-      const targetLanguageInstruction = input.targetLanguage 
-        ? ` Translate the literal rephrasing and explanation into ${input.targetLanguage}.`
-        : ` Use the same language as the input phrase.`;
+      const targetLang = input.targetLanguage || "English";
+      const targetLanguageInstruction = ` Translate the literal rephrasing and explanation into ${targetLang}.`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-5.1",
         messages: [
           {
             role: "system",
-            content: `You are an assistant designed specifically to help autistic individuals understand confusing colloquialisms, idioms, figures of speech, and metaphors.
+            content: `You are an assistant designed specifically to help autistic individuals and ESL speakers understand confusing colloquialisms, idioms, figures of speech, metaphors, and sarcasm.
 Your tone should be neutral, direct, clear, and reassuring.
 
-Given a phrase, you must output a JSON object with two fields:
-- "literalTranslation": A very brief, literal rephrasing of the text without any metaphors.
-- "explanation": A slightly longer context of why people say that and what the origin or meaning is, keeping it factual and avoiding complex abstractions.
+Given a phrase, first determine whether it contains:
+- An idiom, metaphor, or figure of speech
+- Sarcasm or verbal irony (where the speaker means the opposite of what they say, or is exaggerating for effect)
+- A colloquialism or slang expression
+
+Then output a JSON object with three fields:
+- "literalTranslation": A very brief, literal rephrasing of what the person actually means. If the phrase is sarcastic, explain what the speaker truly means (not the surface words).
+- "explanation": A slightly longer context of why people say that and what the origin or meaning is, keeping it factual and avoiding complex abstractions. If the phrase is sarcastic, explain the sarcasm clearly — why the words don't match the meaning, and what emotional tone the speaker is conveying.
+- "type": One of "idiom", "metaphor", "sarcasm", "slang", or "figure_of_speech" to categorize the phrase.
 ${targetLanguageInstruction}
 
 Return ONLY the JSON. Do not wrap in markdown code blocks.`
@@ -69,7 +74,8 @@ Return ONLY the JSON. Do not wrap in markdown code blocks.`
         originalText: input.text,
         literalTranslation: parsedAIResponse.literalTranslation,
         explanation: parsedAIResponse.explanation,
-        targetLanguage: input.targetLanguage
+        targetLanguage: input.targetLanguage,
+        phraseType: parsedAIResponse.type
       });
 
       res.status(201).json(translation);
