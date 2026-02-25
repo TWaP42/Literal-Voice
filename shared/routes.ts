@@ -27,12 +27,13 @@ export const api = {
       method: 'POST' as const,
       path: '/api/translations' as const,
       input: z.object({ 
-        text: z.string().min(1, "Please enter a phrase to translate"),
-        targetLanguage: z.string().optional()
+        text: z.string().min(1, "Please enter a phrase to translate").max(500, "Phrase is too long (max 500 characters)"),
+        targetLanguage: z.string().max(30, "Language name is too long").optional()
       }),
       responses: {
         201: z.custom<typeof translations.$inferSelect>(),
         400: errorSchemas.validation,
+        429: z.object({ message: z.string() }),
         500: errorSchemas.internal,
       },
     }

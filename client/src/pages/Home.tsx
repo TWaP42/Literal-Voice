@@ -21,8 +21,8 @@ export default function Home() {
 
     try {
       await createMutation.mutateAsync({ 
-        text, 
-        ...(targetLanguage.trim() ? { targetLanguage: targetLanguage.trim() } : {})
+        text: text.trim(),
+        targetLanguage: targetLanguage.trim() || "English",
       });
       setText("");
       toast({
@@ -78,6 +78,7 @@ export default function Home() {
                     onChange={(e) => setText(e.target.value)}
                     placeholder='Try "It is raining cats and dogs"...'
                     className="pl-10 sm:pl-12 border-0 bg-transparent focus-visible:ring-0 text-base sm:text-lg placeholder:text-muted-foreground/50 h-12 sm:h-14"
+                    maxLength={500}
                     disabled={createMutation.isPending}
                     data-testid="input-phrase"
                   />
@@ -89,8 +90,9 @@ export default function Home() {
                   <Input
                     value={targetLanguage}
                     onChange={(e) => setTargetLanguage(e.target.value)}
-                    placeholder='Your language (optional, e.g. Spanish)'
+                    placeholder='Your language (e.g. Spanish)'
                     className="pl-10 sm:pl-12 border-0 bg-slate-50 focus-visible:ring-0 text-sm sm:text-base h-10 sm:h-12 rounded-xl"
+                    maxLength={30}
                     disabled={createMutation.isPending}
                     data-testid="input-language"
                   />
