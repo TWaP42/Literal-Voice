@@ -129,7 +129,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <AnimatePresence mode="popLayout">
               {isLoadingHistory ? (
-                Array.from({ length: 4 }).map((_, i) => (
+                Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="h-48 bg-white/50 rounded-2xl animate-pulse border border-white/50" />
                 ))
               ) : recentTranslations?.length === 0 ? (
@@ -137,7 +137,7 @@ export default function Home() {
                   <p className="text-base sm:text-lg">No translations yet. Try creating one above!</p>
                 </div>
               ) : (
-                recentTranslations?.map((translation, index) => (
+                recentTranslations?.slice(0, 3).map((translation, index) => (
                   <TranslationCard 
                     key={translation.id} 
                     translation={translation} 
