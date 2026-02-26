@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -10,6 +10,7 @@ export const translations = pgTable("translations", {
   explanation: text("explanation"),
   targetLanguage: text("target_language"),
   phraseType: text("phrase_type"),
+  containsProfanity: boolean("contains_profanity").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

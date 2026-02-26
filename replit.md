@@ -26,7 +26,7 @@ Full-stack TypeScript application built as a Progressive Web App (PWA).
 
 ### Database
 - **PostgreSQL** with **Drizzle ORM**
-- Single `translations` table: id, originalText, literalTranslation, explanation, targetLanguage, phraseType, createdAt
+- Single `translations` table: id, originalText, literalTranslation, explanation, targetLanguage, phraseType, containsProfanity, createdAt
 - Paginated queries (default 50, max 100)
 
 ## Project Structure
@@ -72,6 +72,8 @@ shared/
 - Phrase-to-literal translation via AI (idioms, metaphors, sarcasm, slang)
 - Sarcasm handled by Claude for deeper emotional subtext analysis
 - Phrase type detection with color-coded badges
+- Profanity detection: AI flags offensive content, cards are blurred with a content warning overlay; users can reveal/re-hide
+- Home page shows max 3 recent translations; full history on History page
 - Default English target language for ESL speakers
 - PWA: installable on mobile (iOS/Android), offline-capable
 - Mobile-first responsive design with bottom tab navigation
