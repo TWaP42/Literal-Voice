@@ -12,15 +12,56 @@
     <meta property="og:description" content="Instantly translate metaphors, idioms, sarcasm, and figures of speech into clear, literal language" />
     <meta property="og:type" content="website" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144.png" />
+    <link rel="apple-touch-icon" sizes="128x128" href="/icons/icon-128.png" />
     <link rel="manifest" href="/manifest.json" />
     <title>LiteralVoice</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+      #splash-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #eff6ff, #ffffff, #faf5ff);
+        transition: opacity 0.3s ease-out;
+      }
+      #splash-screen.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #splash-screen .splash-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        margin-bottom: 16px;
+      }
+      #splash-screen .splash-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        color: #1e293b;
+        letter-spacing: -0.025em;
+      }
+      #splash-screen .splash-title span {
+        color: #0ea5e9;
+      }
+    </style>
   </head>
   <body>
+    <div id="splash-screen">
+      <img src="/icons/icon-192.png" alt="" class="splash-icon" />
+      <div class="splash-title">Literal<span>Voice</span></div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

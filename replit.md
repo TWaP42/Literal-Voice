@@ -4,7 +4,7 @@ A web app for level 1 autistic individuals and ESL speakers that instantly trans
 
 ## Architecture
 
-Full-stack TypeScript application built as a Progressive Web App (PWA).
+Full-stack TypeScript application deployed as a Progressive Web App (PWA) installable on iOS and Android.
 
 ### Frontend
 - **React 18** with Vite for fast development and builds
@@ -12,7 +12,7 @@ Full-stack TypeScript application built as a Progressive Web App (PWA).
 - **Framer Motion** for animations
 - **TanStack Query v5** for data fetching/caching
 - **Wouter** for routing
-- PWA-enabled: manifest.json, service worker for offline support, mobile-optimized UI
+- PWA-enabled: manifest.json, service worker (v3), splash screen, install prompt, offline indicator
 
 ### Backend
 - **Express 5** server (Node.js)
@@ -33,21 +33,23 @@ Full-stack TypeScript application built as a Progressive Web App (PWA).
 
 ```
 client/
-  index.html              - HTML entry with PWA meta tags
+  index.html              - HTML entry with PWA meta tags, splash screen
   public/
-    manifest.json          - PWA manifest
-    sw.js                  - Service worker
-    icons/                 - App icons (SVG)
+    manifest.json          - Full PWA manifest with shortcuts, categories, all icon sizes
+    sw.js                  - Service worker (v3) with font caching, network-first strategy
+    icons/                 - PNG icons (48-512px) + apple-touch-icon
   src/
-    main.tsx               - Entry point with SW registration
-    App.tsx                - Routes
-    index.css              - Global styles with mobile optimizations
+    main.tsx               - Entry point with SW registration and splash dismissal
+    App.tsx                - Routes + PWA components (install prompt, offline indicator)
+    index.css              - Global styles with standalone mode, safe areas, animations
     pages/
       Home.tsx             - Main translation page
       History.tsx           - Translation history
     components/
-      layout/Navbar.tsx    - Top nav + mobile bottom tab bar
+      layout/Navbar.tsx    - Top nav + mobile bottom tab bar with safe areas
       translation/TranslationCard.tsx - Card displaying a translation (forwardRef)
+      pwa/InstallPrompt.tsx - Native app install banner (Android beforeinstallprompt)
+      pwa/OfflineIndicator.tsx - Offline status banner
     hooks/
       use-translations.ts  - Query/mutation hooks
       use-toast.ts         - Toast notifications
@@ -61,12 +63,24 @@ shared/
   models/chat.ts          - Chat models (from Anthropic blueprint, unused)
 ```
 
+## PWA / Mobile App Features
+- **Manifest**: Full icon set (48-512px PNG), maskable icons, app shortcuts, categories
+- **Service Worker v3**: Network-first with font caching, offline fallback
+- **Splash Screen**: Branded loading screen with logo, fades after React mounts
+- **Install Prompt**: Android install banner via beforeinstallprompt API (dismissible per session)
+- **Offline Indicator**: Amber banner when network is unavailable
+- **iOS Support**: apple-touch-icon (180px), multiple sizes (128-152px), apple-mobile-web-app-capable, black-translucent status bar
+- **Safe Areas**: env(safe-area-inset-*) padding on nav, tab bar for notched devices
+- **Standalone Mode**: Disabled overscroll bounce, user-select text only, no browser chrome
+- **Touch**: touch-action: manipulation on interactive elements, -webkit-tap-highlight-color: transparent
+
 ## Security
 - Prompt injection protection: user input treated as data, never as instructions
 - Language field validated against allowlist (rejects freeform injection attempts)
 - Input sanitized: control characters stripped, length capped at 500 chars
 - AI response validated with Zod schema before database insertion
 - Rate limiting: 10 translations per minute per IP
+- JSON body limit: 10kb
 
 ## Key Features
 - Phrase-to-literal translation via AI (idioms, metaphors, sarcasm, slang)
@@ -75,7 +89,7 @@ shared/
 - Profanity detection: AI flags offensive content, cards are blurred with a content warning overlay; users can reveal/re-hide
 - Home page shows max 3 recent translations; full history on History page
 - Default English target language for ESL speakers
-- PWA: installable on mobile (iOS/Android), offline-capable
+- PWA: installable on mobile (iOS/Android), offline-capable, splash screen, install prompt
 - Mobile-first responsive design with bottom tab navigation
 - Paginated translation history
 
