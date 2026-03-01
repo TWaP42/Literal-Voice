@@ -33,8 +33,10 @@ export function useCreateTranslation() {
 
       return await res.json() as TranslationResponse;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.translations.list.path] });
+    onSuccess: (_data, variables) => {
+      if (!variables.noSave) {
+        queryClient.invalidateQueries({ queryKey: [api.translations.list.path] });
+      }
     },
   });
 }
