@@ -21,8 +21,6 @@ const config: CapacitorConfig = {
     },
   },
   ios: {
-    scheme: "LiteralVoice",
-    // Allow loading fonts from Google Fonts
     allowsLinkPreview: false,
     scrollEnabled: true,
   },
