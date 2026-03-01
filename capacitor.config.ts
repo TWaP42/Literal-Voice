@@ -29,9 +29,8 @@ const config: CapacitorConfig = {
     captureInput: true,
     webContentsDebuggingEnabled: isDev,
   },
-  // DEV ONLY: Remove this block when deploying to the App Store / Play Store.
-  // For local development, the native app loads directly from your running Express server.
-  // iOS simulator uses 'localhost', Android emulator uses '10.0.2.2'.
+  // DEV: native app loads from local Express server (localhost:3000)
+  // PROD: static bundle is used; API calls go to VITE_API_BASE_URL (set at build time)
   ...(isDev && {
     server: {
       url: "http://localhost:3000",
