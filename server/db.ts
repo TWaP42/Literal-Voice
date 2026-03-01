@@ -1,14 +1,17 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import pg from "pg";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as schema from "@shared/schema";
+import path from "path";
+import { mkdirSync } from "fs";
 
-const { Pool } = pg;
+const DB_PATH = process.env.DATABASE_PATH || path.resolve("data", "translations.db");
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
+// Ensure the data directory exists
+mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool, { schema });
+const sqlite = new Database(DB_PATH);
+
+// Enable WAL mode for better performance
+sqlite.pragma("journal_mode = WAL");
+
+export const db = drizzle(sqlite, { schema });

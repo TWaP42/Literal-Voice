@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">LiteralVoice</string>
+    <string name="title_activity_main">LiteralVoice</string>
+    <string name="package_name">com.literalvoice.app</string>
+    <string name="custom_url_scheme">com.literalvoice.app</string>
+</resources>

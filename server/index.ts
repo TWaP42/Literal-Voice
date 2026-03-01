@@ -1,11 +1,35 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes, seedDatabase } from "./routes";
+import { initializeDatabase } from "./storage";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
 const app = express();
 app.set("trust proxy", 1);
 const httpServer = createServer(app);
+
+// Allow Capacitor native origins (iOS: capacitor://localhost, Android: http://localhost)
+const ALLOWED_ORIGINS = [
+  "http://localhost:5000",
+  "http://localhost",
+  "capacitor://localhost",
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(",") : []),
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
 
 declare module "http" {
   interface IncomingMessage {
@@ -62,6 +86,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  initializeDatabase();
   await registerRoutes(httpServer, app);
   
   // Seed the database
@@ -94,15 +119,8 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || "5000", 10);
-  httpServer.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    },
-  );
+  const port = parseInt(process.env.PORT || "3000", 10);
+  httpServer.listen(port, "0.0.0.0", () => {
+    log(`serving on port ${port}`);
+  });
 })();
