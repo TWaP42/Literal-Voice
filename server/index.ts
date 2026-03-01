@@ -11,9 +11,9 @@ const httpServer = createServer(app);
 
 // Allow Capacitor native origins (iOS: capacitor://localhost, Android: http://localhost)
 const ALLOWED_ORIGINS = [
-  "http://localhost:5000",
-  "http://localhost",
-  "capacitor://localhost",
+  "http://localhost:3000",
+  "http://localhost",       // Android emulator
+  "capacitor://localhost",  // iOS native app
   ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(",") : []),
 ];
 

@@ -5,7 +5,7 @@ import { rm, readFile } from "fs/promises";
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
 const allowlist = [
-  "better-sqlite3",
+  // better-sqlite3 is intentionally excluded — it's a native module and cannot be bundled
   "date-fns",
   "dotenv",
   "drizzle-orm",
