@@ -5,17 +5,8 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
 
-let _anthropic: Anthropic | null = null;
-
-function getAnthropic(): Anthropic {
-  if (!_anthropic) {
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY is not set. Add it to your .env file.");
-    }
-    _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  }
-  return _anthropic;
-}
+// The Anthropic SDK reads ANTHROPIC_API_KEY from the environment automatically.
+const anthropic = new Anthropic();
 
 const ALLOWED_LANGUAGES = [
   "English", "Spanish", "French", "German", "Italian", "Portuguese",
@@ -107,7 +98,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 
 async function translateWithClaude(sanitizedText: string, targetLang: string) {
   const message = await withTimeout(
-    getAnthropic().messages.create({
+    anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 1024,
       system: `${SYSTEM_PROMPT}\n\nTranslate the literalTranslation and explanation into ${targetLang}.`,
