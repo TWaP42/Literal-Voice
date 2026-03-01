@@ -29,14 +29,12 @@ const config: CapacitorConfig = {
     captureInput: true,
     webContentsDebuggingEnabled: isDev,
   },
-  // DEV: native app loads from local Express server (localhost:3000)
-  // PROD: static bundle is used; API calls go to VITE_API_BASE_URL (set at build time)
-  ...(isDev && {
-    server: {
-      url: "http://localhost:3000",
-      cleartext: true,
-    },
-  }),
+  // Always point the native app at the Railway backend.
+  // The server is deployed there — no local server needed.
+  server: {
+    url: "https://vivacious-fascination-production-f568.up.railway.app",
+    cleartext: false,
+  },
 };
 
 export default config;
