@@ -2,15 +2,12 @@ import { forwardRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Lightbulb, Globe, MessageCircle, Flame, BookOpen, Hash, Quote, AlertTriangle, Eye, EyeOff, Trash2, Star } from "lucide-react";
-import type { Translation } from "@shared/schema";
-import { useDeleteTranslation, useToggleFavourite } from "@/hooks/use-translations";
-import { useToast } from "@/hooks/use-toast";
+import { ArrowRight, Lightbulb, Globe, MessageCircle, Flame, BookOpen, Hash, Quote, AlertTriangle, Eye, EyeOff } from "lucide-react";
+import type { TranslationResult } from "@shared/routes";
 
 interface TranslationCardProps {
-  translation: Translation;
+  translation: TranslationResult;
   index: number;
-  showActions?: boolean;
 }
 
 const typeConfig: Record<string, { label: string; color: string; icon: typeof MessageCircle }> = {
@@ -22,37 +19,11 @@ const typeConfig: Record<string, { label: string; color: string; icon: typeof Me
 };
 
 export const TranslationCard = forwardRef<HTMLDivElement, TranslationCardProps>(
-  function TranslationCard({ translation, index, showActions = false }, ref) {
+  function TranslationCard({ translation, index }, ref) {
     const [revealed, setRevealed] = useState(false);
-    const [confirmDelete, setConfirmDelete] = useState(false);
     const phraseType = translation.phraseType ? typeConfig[translation.phraseType] : null;
     const TypeIcon = phraseType?.icon;
     const isConcealed = translation.containsProfanity && !revealed;
-    const deleteMutation = useDeleteTranslation();
-    const favouriteMutation = useToggleFavourite();
-    const { toast } = useToast();
-
-    const handleDelete = async () => {
-      if (!confirmDelete) {
-        setConfirmDelete(true);
-        setTimeout(() => setConfirmDelete(false), 3000);
-        return;
-      }
-      try {
-        await deleteMutation.mutateAsync(translation.id);
-        toast({ title: "Deleted", description: "Translation removed." });
-      } catch {
-        toast({ title: "Error", description: "Could not delete translation.", variant: "destructive" });
-      }
-    };
-
-    const handleFavourite = async () => {
-      try {
-        await favouriteMutation.mutateAsync(translation.id);
-      } catch {
-        toast({ title: "Error", description: "Could not update favourite.", variant: "destructive" });
-      }
-    };
 
     return (
       <motion.div
@@ -61,14 +32,12 @@ export const TranslationCard = forwardRef<HTMLDivElement, TranslationCardProps>(
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.3, delay: Math.min(index * 0.1, 0.5) }}
-        data-testid={`card-translation-${translation.id}`}
       >
         <Card className="h-full hover:border-primary/30 group bg-white/50 backdrop-blur-sm touch-manipulation relative overflow-hidden">
           {isConcealed && (
             <div
               className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-white/95 backdrop-blur-sm p-6"
               role="alert"
-              data-testid={`overlay-profanity-${translation.id}`}
             >
               <div className="p-3 bg-amber-100 rounded-full">
                 <AlertTriangle className="w-6 h-6 text-amber-600" aria-hidden="true" />
@@ -85,7 +54,6 @@ export const TranslationCard = forwardRef<HTMLDivElement, TranslationCardProps>(
                 onClick={() => setRevealed(true)}
                 className="gap-2"
                 aria-label="Show translation with content warning"
-                data-testid={`button-reveal-${translation.id}`}
               >
                 <Eye className="w-4 h-4" aria-hidden="true" />
                 Show Translation
@@ -99,47 +67,18 @@ export const TranslationCard = forwardRef<HTMLDivElement, TranslationCardProps>(
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs sm:text-sm font-medium px-2 py-1 bg-muted rounded-md text-muted-foreground">Original Phrase</span>
                   {phraseType && TypeIcon && (
-                    <span className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border ${phraseType.color}`} data-testid={`badge-type-${translation.id}`}>
+                    <span className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border ${phraseType.color}`}>
                       <TypeIcon className="w-3 h-3" aria-hidden="true" />
                       {phraseType.label}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5">
-                  {translation.targetLanguage && (
-                    <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-accent/10 text-accent rounded-md" data-testid={`text-language-${translation.id}`}>
-                      <Globe className="w-3 h-3" aria-hidden="true" />
-                      {translation.targetLanguage}
-                    </span>
-                  )}
-                  {showActions && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={`h-7 w-7 rounded-full transition-colors ${translation.isFavourite ? "text-yellow-500 hover:text-yellow-600" : "text-muted-foreground hover:text-yellow-500"}`}
-                        onClick={handleFavourite}
-                        disabled={favouriteMutation.isPending}
-                        aria-label={translation.isFavourite ? "Remove from favourites" : "Add to favourites"}
-                        aria-pressed={translation.isFavourite}
-                        data-testid={`button-favourite-${translation.id}`}
-                      >
-                        <Star className="w-3.5 h-3.5" fill={translation.isFavourite ? "currentColor" : "none"} aria-hidden="true" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={`h-7 w-7 rounded-full transition-colors ${confirmDelete ? "text-red-600 hover:text-red-700 bg-red-50" : "text-muted-foreground hover:text-red-500"}`}
-                        onClick={handleDelete}
-                        disabled={deleteMutation.isPending}
-                        aria-label={confirmDelete ? "Confirm delete translation" : "Delete translation"}
-                        data-testid={`button-delete-${translation.id}`}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      </Button>
-                    </>
-                  )}
-                </div>
+                {translation.targetLanguage && (
+                  <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-accent/10 text-accent rounded-md">
+                    <Globe className="w-3 h-3" aria-hidden="true" />
+                    {translation.targetLanguage}
+                  </span>
+                )}
               </div>
               <CardTitle className="text-lg sm:text-xl font-medium text-foreground/80 group-hover:text-foreground transition-colors leading-snug">
                 "{translation.originalText}"
@@ -153,7 +92,7 @@ export const TranslationCard = forwardRef<HTMLDivElement, TranslationCardProps>(
                   </div>
                   <div className="min-w-0">
                     <span className="text-xs font-bold text-primary uppercase tracking-wider mb-1 block">Literal Meaning</span>
-                    <p className="text-base sm:text-lg font-medium text-foreground leading-relaxed break-words" data-testid={`text-literal-${translation.id}`}>
+                    <p className="text-base sm:text-lg font-medium text-foreground leading-relaxed break-words">
                       {translation.literalTranslation}
                     </p>
                   </div>
@@ -166,7 +105,7 @@ export const TranslationCard = forwardRef<HTMLDivElement, TranslationCardProps>(
                     </div>
                     <div className="min-w-0">
                       <span className="text-xs font-bold text-secondary uppercase tracking-wider mb-1 block">Why people say this</span>
-                      <p className="text-sm sm:text-base text-muted-foreground leading-relaxed break-words" data-testid={`text-explanation-${translation.id}`}>
+                      <p className="text-sm sm:text-base text-muted-foreground leading-relaxed break-words">
                         {translation.explanation}
                       </p>
                     </div>
@@ -184,7 +123,6 @@ export const TranslationCard = forwardRef<HTMLDivElement, TranslationCardProps>(
                 onClick={() => setRevealed(false)}
                 className="gap-2 text-muted-foreground w-full"
                 aria-label="Hide translation content"
-                data-testid={`button-hide-${translation.id}`}
               >
                 <EyeOff className="w-4 h-4" aria-hidden="true" />
                 Hide Translation

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { MessageSquareText, Home, Clock, Info } from "lucide-react";
+import { MessageSquareText, Home, Info } from "lucide-react";
 
 export function Navbar() {
   const [location] = useLocation();
@@ -32,14 +32,6 @@ export function Navbar() {
                 Translate
               </Link>
               <Link
-                href="/history"
-                className={`text-sm font-medium transition-colors touch-manipulation ${location === "/history" ? "text-primary" : "text-foreground/80 hover:text-primary"}`}
-                aria-current={location === "/history" ? "page" : undefined}
-                data-testid="link-history-desktop"
-              >
-                History
-              </Link>
-              <Link
                 href="/about"
                 className={`text-sm font-medium transition-colors touch-manipulation ${location === "/about" ? "text-primary" : "text-foreground/80 hover:text-primary"}`}
                 aria-current={location === "/about" ? "page" : undefined}
@@ -60,19 +52,13 @@ export function Navbar() {
       >
         <div className="flex items-center justify-around h-16 safe-left safe-right">
           <Link href="/" data-testid="link-translate-mobile" aria-label="Translate" aria-current={location === "/" ? "page" : undefined}>
-            <div className={`flex flex-col items-center gap-1 px-5 py-2 rounded-xl transition-colors touch-manipulation ${location === "/" ? "text-primary" : "text-muted-foreground"}`}>
+            <div className={`flex flex-col items-center gap-1 px-8 py-2 rounded-xl transition-colors touch-manipulation ${location === "/" ? "text-primary" : "text-muted-foreground"}`}>
               <Home className="h-5 w-5" aria-hidden="true" />
               <span className="text-xs font-medium">Translate</span>
             </div>
           </Link>
-          <Link href="/history" data-testid="link-history-mobile" aria-label="History" aria-current={location === "/history" ? "page" : undefined}>
-            <div className={`flex flex-col items-center gap-1 px-5 py-2 rounded-xl transition-colors touch-manipulation ${location === "/history" ? "text-primary" : "text-muted-foreground"}`}>
-              <Clock className="h-5 w-5" aria-hidden="true" />
-              <span className="text-xs font-medium">History</span>
-            </div>
-          </Link>
           <Link href="/about" data-testid="link-about-mobile" aria-label="About" aria-current={location === "/about" ? "page" : undefined}>
-            <div className={`flex flex-col items-center gap-1 px-5 py-2 rounded-xl transition-colors touch-manipulation ${location === "/about" ? "text-primary" : "text-muted-foreground"}`}>
+            <div className={`flex flex-col items-center gap-1 px-8 py-2 rounded-xl transition-colors touch-manipulation ${location === "/about" ? "text-primary" : "text-muted-foreground"}`}>
               <Info className="h-5 w-5" aria-hidden="true" />
               <span className="text-xs font-medium">About</span>
             </div>

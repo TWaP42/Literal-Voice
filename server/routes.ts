@@ -1,6 +1,5 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
-import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
@@ -128,35 +127,14 @@ async function translateWithClaude(sanitizedText: string, targetLang: string) {
   return aiResponseSchema.parse(parsedRaw);
 }
 
-function getSessionId(req: Request): string | undefined {
-  const id = req.headers["x-session-id"];
-  if (typeof id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id)) return id;
-  return undefined;
-}
-
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
 
-  app.get(api.translations.list.path, async (req, res) => {
-    try {
-      const limitParam = parseInt(req.query.limit as string) || 50;
-      const limit = Math.min(Math.max(limitParam, 1), 100);
-      const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
-      const sessionId = getSessionId(req);
-      const allTranslations = await storage.getTranslations(limit, offset, sessionId);
-      res.json(allTranslations);
-    } catch (err) {
-      console.error("Error fetching translations:", err);
-      res.status(500).json({ message: "Failed to fetch translations" });
-    }
-  });
-
   app.post(api.translations.create.path, rateLimit, async (req, res) => {
     try {
       const input = api.translations.create.input.parse(req.body);
-      const sessionId = getSessionId(req);
 
       const sanitizedText = sanitizeText(input.text);
       if (sanitizedText.length === 0) {
@@ -166,33 +144,14 @@ export async function registerRoutes(
       const targetLang = validateLanguage(input.targetLanguage || "English");
       const result = await translateWithClaude(sanitizedText, targetLang);
 
-      if (input.noSave) {
-        return res.status(200).json({
-          id: -1,
-          originalText: sanitizedText,
-          literalTranslation: result.literalTranslation,
-          explanation: result.explanation ?? null,
-          targetLanguage: targetLang,
-          phraseType: result.type ?? null,
-          containsProfanity: result.containsProfanity ?? false,
-          sessionId: null,
-          isFavourite: false,
-          createdAt: new Date().toISOString(),
-        });
-      }
-
-      const translation = await storage.createTranslation({
+      return res.status(200).json({
         originalText: sanitizedText,
         literalTranslation: result.literalTranslation,
-        explanation: result.explanation,
+        explanation: result.explanation ?? null,
         targetLanguage: targetLang,
-        phraseType: result.type || null,
-        containsProfanity: result.containsProfanity || false,
-        sessionId: sessionId || null,
-        isFavourite: false,
+        phraseType: result.type ?? null,
+        containsProfanity: result.containsProfanity ?? false,
       });
-
-      res.status(201).json(translation);
 
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -207,72 +166,5 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/translations/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) return res.status(400).json({ message: "Invalid translation ID" });
-
-      const sessionId = getSessionId(req);
-      if (!sessionId) return res.status(403).json({ message: "Session ID required" });
-
-      const deleted = await storage.deleteTranslation(id, sessionId);
-      if (!deleted) return res.status(404).json({ message: "Translation not found" });
-
-      res.status(204).send();
-    } catch (err) {
-      console.error("Delete error:", err);
-      res.status(500).json({ message: "Failed to delete translation" });
-    }
-  });
-
-  app.patch("/api/translations/:id/favourite", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) return res.status(400).json({ message: "Invalid translation ID" });
-
-      const sessionId = getSessionId(req);
-      if (!sessionId) return res.status(403).json({ message: "Session ID required" });
-
-      const updated = await storage.toggleFavourite(id, sessionId);
-      if (!updated) return res.status(404).json({ message: "Translation not found" });
-
-      res.json(updated);
-    } catch (err) {
-      console.error("Favourite toggle error:", err);
-      res.status(500).json({ message: "Failed to update favourite" });
-    }
-  });
-
   return httpServer;
-}
-
-export async function seedDatabase() {
-  try {
-    const existing = await storage.getTranslations(1, 0);
-    if (existing.length === 0) {
-      await storage.createTranslation({
-        originalText: "Break a leg",
-        literalTranslation: "Good luck",
-        explanation: "This is a theatrical idiom. People used to think saying 'good luck' to an actor was bad luck, so they said the opposite instead.",
-        targetLanguage: "English",
-        phraseType: "idiom",
-      });
-      await storage.createTranslation({
-        originalText: "It's raining cats and dogs",
-        literalTranslation: "It is raining very heavily",
-        explanation: "This is an old English idiom used to describe a severe rainstorm. Cats and dogs are not actually falling from the sky.",
-        targetLanguage: "English",
-        phraseType: "idiom",
-      });
-      await storage.createTranslation({
-        originalText: "Under the weather",
-        literalTranslation: "Feeling sick or unwell",
-        explanation: "This comes from sailing. Sailors who were sea-sick would go below deck (under the weather) to recover.",
-        targetLanguage: "English",
-        phraseType: "idiom",
-      });
-    }
-  } catch (error) {
-    console.error("Failed to seed database:", error);
-  }
 }
