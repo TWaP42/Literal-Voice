@@ -49,11 +49,11 @@ export default function Privacy() {
               },
               {
                 heading: "5. Data retention and deletion",
-                body: `Your translations are retained until you delete them using the delete button in History. You can remove all your data at any time by clearing your browser's localStorage (which resets your session ID) and deleting individual translations from the History page.`,
+                body: `LiteralVoice does not store your translations. Each translation is generated in real time and returned directly to your browser. Once you close or refresh the page, the translation is gone. Nothing is saved to any database.`,
               },
               {
                 heading: "6. Cookies and local storage",
-                body: `We use localStorage to store an anonymous session identifier (lv-session-id). We do not use tracking cookies or analytics scripts.`,
+                body: `LiteralVoice does not use cookies, tracking scripts, or analytics. We do not store any data in your browser's localStorage.`,
               },
               {
                 heading: "7. Security",
