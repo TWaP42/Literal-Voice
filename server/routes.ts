@@ -166,6 +166,21 @@ export async function registerRoutes(
       const targetLang = validateLanguage(input.targetLanguage || "English");
       const result = await translateWithClaude(sanitizedText, targetLang);
 
+      if (input.noSave) {
+        return res.status(200).json({
+          id: -1,
+          originalText: sanitizedText,
+          literalTranslation: result.literalTranslation,
+          explanation: result.explanation ?? null,
+          targetLanguage: targetLang,
+          phraseType: result.type ?? null,
+          containsProfanity: result.containsProfanity ?? false,
+          sessionId: null,
+          isFavourite: false,
+          createdAt: new Date().toISOString(),
+        });
+      }
+
       const translation = await storage.createTranslation({
         originalText: sanitizedText,
         literalTranslation: result.literalTranslation,

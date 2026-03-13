@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type TranslationInput, type TranslationsListResponse, type TranslationResponse } from "@shared/routes";
 
-// In development with Capacitor server.url, relative URLs work fine.
-// For production App Store / Play Store builds, set VITE_API_BASE_URL to your deployed API.
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
 
 function getSessionId(): string {
@@ -52,8 +50,10 @@ export function useCreateTranslation() {
 
       return await res.json() as TranslationResponse;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.translations.list.path] });
+    onSuccess: (_data, variables) => {
+      if (!variables.noSave) {
+        queryClient.invalidateQueries({ queryKey: [api.translations.list.path] });
+      }
     },
   });
 }
