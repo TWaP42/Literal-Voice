@@ -1,0 +1,17 @@
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+
+# Local environment (never commit your API keys)
+.env
+
+# SQLite database
+data/
+
+# Capacitor native projects (generated, not committed to source control)
+# Uncomment these if you don't want to commit the native projects:
+# ios/
+# android/
