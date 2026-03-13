@@ -130,7 +130,7 @@ async function translateWithClaude(sanitizedText: string, targetLang: string) {
 
 function getSessionId(req: Request): string | undefined {
   const id = req.headers["x-session-id"];
-  if (typeof id === "string" && /^[0-9a-f-]{36}$/.test(id)) return id;
+  if (typeof id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id)) return id;
   return undefined;
 }
 
