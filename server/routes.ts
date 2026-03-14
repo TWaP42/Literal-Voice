@@ -34,8 +34,10 @@ function validateLanguage(lang: string): string {
 const rateLimitMap = new Map<string, number[]>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_MAP_MAX = 10_000; // prevent unbounded memory growth
 
 function rateLimit(req: Request, res: Response, next: NextFunction) {
+  // req.ip is resolved by Express using trust proxy setting — safe on Railway
   const ip = req.ip || req.socket.remoteAddress || "unknown";
   const now = Date.now();
   const timestamps = rateLimitMap.get(ip) || [];
@@ -43,6 +45,11 @@ function rateLimit(req: Request, res: Response, next: NextFunction) {
 
   if (recent.length >= RATE_LIMIT_MAX) {
     return res.status(429).json({ message: "Too many requests. Please wait a moment before trying again." });
+  }
+
+  // Drop oldest entry if map is at capacity (rough eviction)
+  if (!rateLimitMap.has(ip) && rateLimitMap.size >= RATE_LIMIT_MAP_MAX) {
+    rateLimitMap.delete(rateLimitMap.keys().next().value!);
   }
 
   recent.push(now);
@@ -155,13 +162,13 @@ export async function registerRoutes(
 
     } catch (err) {
       if (err instanceof z.ZodError) {
-        return res.status(400).json({
-          message: err.errors[0].message,
-          field: err.errors[0].path.join('.'),
-        });
+        return res.status(400).json({ message: "Invalid request. Please check your input and try again." });
       }
-      const message = err instanceof Error ? err.message : "An unexpected error occurred during translation";
       console.error("Translation error:", err);
+      const isTimeout = err instanceof Error && err.message.includes("timed out");
+      const message = isTimeout
+        ? "The request took too long. Please try again."
+        : "An unexpected error occurred. Please try again.";
       res.status(500).json({ message });
     }
   });

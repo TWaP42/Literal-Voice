@@ -13,7 +13,9 @@ const ALLOWED_ORIGINS = [
   "http://localhost:3000",
   "http://localhost",       // Android emulator
   "capacitor://localhost",  // iOS native app
-  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(",") : []),
+  ...(process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean)
+    : []),
 ];
 
 app.use((req, res, next) => {
@@ -45,7 +47,42 @@ app.use(
   }),
 );
 
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false, limit: "10kb" }));
+
+// Security headers
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  res.setHeader(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",  // needed by Vite/React in dev
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data:",
+      "connect-src 'self'",
+      "font-src 'self'",
+      "frame-ancestors 'none'",
+    ].join("; ")
+  );
+  if (process.env.NODE_ENV === "production") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  next();
+});
+
+// Enforce JSON Content-Type on POST requests to /api
+app.use((req, res, next) => {
+  if (req.method === "POST" && req.path.startsWith("/api")) {
+    const ct = req.headers["content-type"] || "";
+    if (!ct.includes("application/json")) {
+      return res.status(415).json({ message: "Content-Type must be application/json" });
+    }
+  }
+  next();
+});
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
