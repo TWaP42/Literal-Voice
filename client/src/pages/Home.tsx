@@ -1,34 +1,43 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useCreateTranslation, useTranslations } from "@/hooks/use-translations";
+import { Link } from "wouter";
+import { useCreateTranslation } from "@/hooks/use-translations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Navbar } from "@/components/layout/Navbar";
 import { TranslationCard } from "@/components/translation/TranslationCard";
-import { Loader2, Search, Sparkles, Globe } from "lucide-react";
+import { Loader2, Search, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import type { TranslationResult } from "@shared/routes";
+
+const LANGUAGES = [
+  "English", "Spanish", "French", "German", "Italian", "Portuguese",
+  "Russian", "Chinese", "Japanese", "Korean", "Arabic", "Hindi",
+  "Dutch", "Swedish", "Norwegian", "Danish", "Finnish", "Polish",
+  "Turkish", "Greek", "Hebrew", "Thai", "Vietnamese", "Indonesian",
+  "Malay", "Filipino", "Czech", "Romanian", "Hungarian", "Ukrainian",
+  "Bengali", "Tamil", "Telugu", "Urdu", "Persian", "Swahili",
+];
 
 export default function Home() {
   const [text, setText] = useState("");
   const [targetLanguage, setTargetLanguage] = useState("English");
+  const [result, setResult] = useState<TranslationResult | null>(null);
   const { toast } = useToast();
   const createMutation = useCreateTranslation();
-  const { data: recentTranslations, isLoading: isLoadingHistory } = useTranslations();
 
   const handleTranslate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
 
     try {
-      await createMutation.mutateAsync({ 
+      const translation = await createMutation.mutateAsync({
         text: text.trim(),
-        targetLanguage: targetLanguage.trim() || "English",
+        targetLanguage,
       });
+      setResult(translation);
       setText("");
-      toast({
-        title: "Translation Complete",
-        description: "The phrase has been translated successfully.",
-      });
     } catch (error) {
       toast({
         title: "Error",
@@ -41,8 +50,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pb-20 md:pb-0">
       <Navbar />
-      
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 space-y-8 sm:space-y-16">
+
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 space-y-8 sm:space-y-12">
         <div className="text-center space-y-4 sm:space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -60,18 +69,18 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             className="max-w-2xl mx-auto"
           >
-            <form onSubmit={handleTranslate} className="relative group" data-testid="form-translate">
+            <form onSubmit={handleTranslate} className="relative group" aria-label="Translate a phrase" data-testid="form-translate">
               <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-accent/20 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
               <div className="relative flex flex-col gap-2 p-2 bg-white rounded-2xl shadow-xl border border-white/50">
                 <div className="relative flex-grow">
                   <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    <Search className="w-5 h-5" />
+                    <Search className="w-5 h-5" aria-hidden="true" />
                   </div>
                   <Input
                     value={text}
@@ -80,38 +89,46 @@ export default function Home() {
                     className="pl-10 sm:pl-12 border-0 bg-transparent focus-visible:ring-0 text-base sm:text-lg placeholder:text-muted-foreground/50 h-12 sm:h-14"
                     maxLength={500}
                     disabled={createMutation.isPending}
+                    aria-label="Enter a phrase to translate"
+                    aria-required="true"
                     data-testid="input-phrase"
                   />
                 </div>
                 <div className="relative flex-grow">
-                  <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    <Globe className="w-4 h-4" />
-                  </div>
-                  <Input
+                  <Select
                     value={targetLanguage}
-                    onChange={(e) => setTargetLanguage(e.target.value)}
-                    placeholder='Your language (e.g. Spanish)'
-                    className="pl-10 sm:pl-12 border-0 bg-slate-50 focus-visible:ring-0 text-sm sm:text-base h-10 sm:h-12 rounded-xl"
-                    maxLength={30}
+                    onValueChange={setTargetLanguage}
                     disabled={createMutation.isPending}
-                    data-testid="input-language"
-                  />
+                  >
+                    <SelectTrigger
+                      className="border-0 bg-slate-50 focus:ring-0 h-10 sm:h-12 rounded-xl text-sm sm:text-base"
+                      aria-label="Select explanation language"
+                      data-testid="input-language"
+                    >
+                      <SelectValue placeholder="Select explanation language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LANGUAGES.map((lang) => (
+                        <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Button 
-                  size="lg" 
-                  type="submit" 
+                <Button
+                  size="lg"
+                  type="submit"
                   disabled={createMutation.isPending || !text.trim()}
                   className="rounded-xl h-12 sm:h-14 text-base touch-manipulation active:scale-[0.98] transition-transform"
                   data-testid="button-submit"
                 >
                   {createMutation.isPending ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                       Translating...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="mr-2 h-4 w-4" />
+                      <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
                       Translate Phrase
                     </>
                   )}
@@ -121,33 +138,25 @@ export default function Home() {
           </motion.div>
         </div>
 
-        <div className="space-y-6 sm:space-y-8">
-          <div className="flex items-center justify-between border-b pb-3 sm:pb-4">
-            <h2 className="text-xl sm:text-2xl font-display font-bold text-foreground">Recent Translations</h2>
-          </div>
+        <AnimatePresence mode="wait">
+          {result && (
+            <motion.div
+              key={result.originalText}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              <TranslationCard translation={result} index={0} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            <AnimatePresence mode="popLayout">
-              {isLoadingHistory ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-48 bg-white/50 rounded-2xl animate-pulse border border-white/50" />
-                ))
-              ) : recentTranslations?.length === 0 ? (
-                <div className="col-span-full py-12 text-center text-muted-foreground bg-white/30 rounded-3xl border border-dashed border-muted-foreground/20">
-                  <p className="text-base sm:text-lg">No translations yet. Try creating one above!</p>
-                </div>
-              ) : (
-                recentTranslations?.slice(0, 3).map((translation, index) => (
-                  <TranslationCard 
-                    key={translation.id} 
-                    translation={translation} 
-                    index={index} 
-                  />
-                ))
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+        <footer className="text-center text-xs text-muted-foreground/60 pt-4 pb-2 space-x-4">
+          <Link href="/about" className="hover:text-muted-foreground transition-colors">About</Link>
+          <Link href="/privacy" className="hover:text-muted-foreground transition-colors">Privacy Policy</Link>
+          <Link href="/terms" className="hover:text-muted-foreground transition-colors">Terms of Service</Link>
+        </footer>
       </main>
     </div>
   );

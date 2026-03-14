@@ -1,6 +1,5 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
-import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
@@ -35,8 +34,10 @@ function validateLanguage(lang: string): string {
 const rateLimitMap = new Map<string, number[]>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_MAP_MAX = 10_000; // prevent unbounded memory growth
 
 function rateLimit(req: Request, res: Response, next: NextFunction) {
+  // req.ip is resolved by Express using trust proxy setting — safe on Railway
   const ip = req.ip || req.socket.remoteAddress || "unknown";
   const now = Date.now();
   const timestamps = rateLimitMap.get(ip) || [];
@@ -44,6 +45,11 @@ function rateLimit(req: Request, res: Response, next: NextFunction) {
 
   if (recent.length >= RATE_LIMIT_MAX) {
     return res.status(429).json({ message: "Too many requests. Please wait a moment before trying again." });
+  }
+
+  // Drop oldest entry if map is at capacity (rough eviction)
+  if (!rateLimitMap.has(ip) && rateLimitMap.size >= RATE_LIMIT_MAP_MAX) {
+    rateLimitMap.delete(rateLimitMap.keys().next().value!);
   }
 
   recent.push(now);
@@ -133,19 +139,6 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  app.get(api.translations.list.path, async (req, res) => {
-    try {
-      const limitParam = parseInt(req.query.limit as string) || 50;
-      const limit = Math.min(Math.max(limitParam, 1), 100);
-      const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
-      const allTranslations = await storage.getTranslations(limit, offset);
-      res.json(allTranslations);
-    } catch (err) {
-      console.error("Error fetching translations:", err);
-      res.status(500).json({ message: "Failed to fetch translations" });
-    }
-  });
-
   app.post(api.translations.create.path, rateLimit, async (req, res) => {
     try {
       const input = api.translations.create.input.parse(req.body);
@@ -158,60 +151,27 @@ export async function registerRoutes(
       const targetLang = validateLanguage(input.targetLanguage || "English");
       const result = await translateWithClaude(sanitizedText, targetLang);
 
-      const translation = await storage.createTranslation({
+      return res.status(200).json({
         originalText: sanitizedText,
         literalTranslation: result.literalTranslation,
-        explanation: result.explanation,
+        explanation: result.explanation ?? null,
         targetLanguage: targetLang,
-        phraseType: result.type || null,
-        containsProfanity: result.containsProfanity || false,
+        phraseType: result.type ?? null,
+        containsProfanity: result.containsProfanity ?? false,
       });
-
-      res.status(201).json(translation);
 
     } catch (err) {
       if (err instanceof z.ZodError) {
-        return res.status(400).json({
-          message: err.errors[0].message,
-          field: err.errors[0].path.join('.'),
-        });
+        return res.status(400).json({ message: "Invalid request. Please check your input and try again." });
       }
-      const message = err instanceof Error ? err.message : "An unexpected error occurred during translation";
       console.error("Translation error:", err);
+      const isTimeout = err instanceof Error && err.message.includes("timed out");
+      const message = isTimeout
+        ? "The request took too long. Please try again."
+        : "An unexpected error occurred. Please try again.";
       res.status(500).json({ message });
     }
   });
 
   return httpServer;
-}
-
-export async function seedDatabase() {
-  try {
-    const existing = await storage.getTranslations(1, 0);
-    if (existing.length === 0) {
-      await storage.createTranslation({
-        originalText: "Break a leg",
-        literalTranslation: "Good luck",
-        explanation: "This is a theatrical idiom. People used to think saying 'good luck' to an actor was bad luck, so they said the opposite instead.",
-        targetLanguage: "English",
-        phraseType: "idiom",
-      });
-      await storage.createTranslation({
-        originalText: "It's raining cats and dogs",
-        literalTranslation: "It is raining very heavily",
-        explanation: "This is an old English idiom used to describe a severe rainstorm. Cats and dogs are not actually falling from the sky.",
-        targetLanguage: "English",
-        phraseType: "idiom",
-      });
-      await storage.createTranslation({
-        originalText: "Under the weather",
-        literalTranslation: "Feeling sick or unwell",
-        explanation: "This comes from sailing. Sailors who were sea-sick would go below deck (under the weather) to recover.",
-        targetLanguage: "English",
-        phraseType: "idiom",
-      });
-    }
-  } catch (error) {
-    console.error("Failed to seed database:", error);
-  }
 }
